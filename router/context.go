@@ -12,13 +12,13 @@ import (
 
 type (
 	APIContext struct {
-		w      http.ResponseWriter
-		r      *http.Request
-		ctx    context.Context
-		cancel context.CancelFunc
-
-		handlers []HandlerFunc
-		log      *slog.Logger
+		w          http.ResponseWriter
+		r          *http.Request
+		ctx        context.Context
+		cancel     context.CancelFunc
+		pathParams map[string]string
+		handlers   []HandlerFunc
+		log        *slog.Logger
 
 		wg *sync.WaitGroup
 	}
@@ -35,7 +35,7 @@ type (
 // check for implementation
 var _ context.Context = (*APIContext)(nil)
 
-func (ctx *APIContext) SetCtx(
+func (ctx *APIContext) setCtx(
 	w http.ResponseWriter,
 	r *http.Request,
 	l *slog.Logger,
@@ -44,8 +44,9 @@ func (ctx *APIContext) SetCtx(
 	ctx.r = r
 	ctx.log = l
 	ctx.handlers = nil
-	ctx.ctx = context.Background()
+	ctx.pathParams = make(map[string]string)
 	ctx.wg = &sync.WaitGroup{}
+	ctx.withCancel()
 }
 
 func (ctx *APIContext) setHandlers(h []HandlerFunc) {
@@ -101,20 +102,25 @@ func (ctx *APIContext) Error(msg string, err error) {
 	ctx.log.Error(msg, slog.Any("error", err))
 }
 
-func (ctx *APIContext) Info(msg string, key string, value any) {
+func (ctx *APIContext) Debug(msg, key string, value any) {
+	ctx.log.Debug(msg, slog.Any(key, value))
+}
+
+func (ctx *APIContext) Info(msg, key string, value any) {
 	ctx.log.Info(msg, slog.Any(key, value))
 }
 
-func (ctx *APIContext) Reset() {
+func (ctx *APIContext) reset() {
 	ctx.w = nil
 	ctx.r = nil
 	ctx.handlers = nil
 	ctx.log = nil
 	ctx.ctx = context.Background()
 	ctx.wg = &sync.WaitGroup{}
+	ctx.pathParams = nil
 }
 
-func (ctx *APIContext) Wait() {
+func (ctx *APIContext) wait() {
 	ctx.wg.Wait()
 }
 
@@ -124,7 +130,14 @@ func (ctx *APIContext) Done() <-chan struct{} {
 
 func (ctx *APIContext) WithTimeout(d time.Duration) {
 	ctxTimeout, cancel := context.WithTimeout(ctx.ctx, d)
+
 	ctx.ctx = ctxTimeout
+	ctx.cancel = cancel
+}
+
+func (ctx *APIContext) withCancel() {
+	ctxWithCancel, cancel := context.WithCancel(context.Background())
+	ctx.ctx = ctxWithCancel
 	ctx.cancel = cancel
 }
 
