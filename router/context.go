@@ -32,6 +32,12 @@ type (
 	}
 )
 
+var (
+	ErrGetBodyFromGet   = errors.New("get body request from get method")
+	ErrGetPathFromPost  = errors.New("get path from post method")
+	ErrGetQueryFromPost = errors.New("get query from post method")
+)
+
 // check for implementation
 var _ context.Context = (*APIContext)(nil)
 
@@ -58,6 +64,12 @@ func (ctx *APIContext) setMiddleware(mw []HandlerFunc) {
 }
 
 func (ctx *APIContext) Decode(dest validator) error {
+	if ctx.r.Method == http.MethodGet {
+		return ErrGetBodyFromGet
+	}
+
+	defer ctx.r.Body.Close()
+
 	err := json.NewDecoder(ctx.r.Body).Decode(&dest)
 	if err != nil || !dest.IsValid() {
 		if err == nil {
@@ -161,10 +173,18 @@ func (ctx *APIContext) GetFromHeader(key string) string {
 	return ctx.r.Header.Get(key)
 }
 
-func (ctx *APIContext) GetFromQuery(key string) string {
-	return ctx.r.URL.Query().Get(key)
+func (ctx *APIContext) GetFromQuery(key string) (string, error) {
+	if ctx.r.Method == http.MethodGet {
+		return ctx.r.URL.Query().Get(key), nil
+	}
+
+	return "", ErrGetQueryFromPost
 }
 
-func (ctx *APIContext) GetFromPath(key string) string {
-	return ctx.pathParams[key]
+func (ctx *APIContext) GetFromPath(key string) (string, error) {
+	if ctx.r.Method == http.MethodGet {
+		return ctx.pathParams[key], nil
+	}
+
+	return "", ErrGetPathFromPost
 }
