@@ -156,3 +156,15 @@ func (ctx *APIContext) Value(key any) any {
 func (ctx *APIContext) Set(key, value any) {
 	ctx.ctx = context.WithValue(ctx.ctx, key, value)
 }
+
+func (ctx *APIContext) GetFromHeader(key string) string {
+	return ctx.r.Header.Get(key)
+}
+
+func (ctx *APIContext) GetFromQuery(key string) string {
+	return ctx.r.URL.Query().Get(key)
+}
+
+func (ctx *APIContext) GetFromPath(key string) string {
+	return ctx.pathParams[key]
+}
