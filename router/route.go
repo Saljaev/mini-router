@@ -80,13 +80,28 @@ func (r *Router) POST(path string, handlers ...HandlerFunc) {
 //	}
 //
 //	func HandlerPath(ctx *router.APIContext) {
-//		id := ctx.GetFromPath("id")
-//		userType := ctx.GetFromPath("usertype")
+//		id, err := ctx.GetFromPath("id")
+//		if err != nil {
+//			ctx.Error("failed to get from path", err)
+//			ctx.WriteFailure(http.StatusInternalServerError, "internal error")
+//			return
+//		}
+//		userType, err := ctx.GetFromPath("usertype")
+//		if err != nil {
+//			ctx.Error("failed to get from path", err)
+//			ctx.WriteFailure(http.StatusInternalServerError, "internal error")
+//			return
+//		}
 //		ctx.SuccessWithData(userType + " " + id)
 //	}
 //
 //	func HandlerQuery(ctx *router.APIContext) {
-//		id := ctx.GetFromQuery("id")
+//		id, err := ctx.GetFromQuery("id")
+//		if err != nil {
+//			ctx.Error("failed to get from query", err)
+//			ctx.WriteFailure(http.StatusInternalServerError, "internal error")
+//			return
+//		}
 //		ctx.SuccessWithData(id)
 //	}
 func (r *Router) GET(path string, handlers ...HandlerFunc) {
