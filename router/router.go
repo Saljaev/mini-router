@@ -2,6 +2,7 @@ package router
 
 import (
 	"log/slog"
+	"net/http"
 	"sync"
 )
 
@@ -20,13 +21,59 @@ type Router struct {
 }
 
 type node struct {
-	path     string
-	handler  map[string][]HandlerFunc
-	children map[string]*node
+	path      string
+	handler   map[string][]HandlerFunc
+	children  map[string]*node
+	isParam   bool   // flag for param in path
+	paramName string // name for param in path
 }
 
+// HandlerFunc is a singe handler with APIContext
 type HandlerFunc func(ctx *APIContext)
 
+// WrapHandler is a wrapper for default handler like
+// func (w http.ResponseWriter, r *http.Request)
+func WrapHandler(handler func(w http.ResponseWriter, r *http.Request)) HandlerFunc {
+	return func(ctx *APIContext) {
+		handler(ctx.w, ctx.r)
+	}
+}
+
+// NewRouter
+//
+// # Example of usage
+//
+//	func main() {
+//		r := router.NewRouter(slog.Default())
+//		r.Use(MiddlewareLogging)
+//		r.POST("/", MainHandler)
+//		http.ListenAndServe("0.0.0.0:80", r)
+//	}
+//
+//	func MiddlewareLogging(ctx *router.APIContext) {
+//		ctx.Info("start handling", "handler", 1)
+//		ctx.Set("idx", 2)
+//	}
+//
+//	type Resp struct {
+//		Msg string `json:"msg"`
+//	}
+//
+//	func MainHandler(ctx *router.APIContext) {
+//		mainResp := Resp{
+//			Msg: "hello world",
+//		}
+//
+//		handlerIndex := ctx.Value("idx")
+//		if handlerIndex == nil {
+//			ctx.Error("fail to get handler index", errors.New("ctx get value error"))
+//			ctx.WriteFailure(http.StatusInternalServerError, "internal error")
+//			return
+//		}
+//
+//		ctx.Info("stop handling", "handler", handlerIndex)
+//		ctx.SuccessWithData(mainResp)
+//	}
 func NewRouter(log *slog.Logger) *Router {
 	return &Router{
 		root: &node{children: make(map[string]*node)},
