@@ -63,6 +63,32 @@ func (ctx *APIContext) setMiddleware(mw []HandlerFunc) {
 	ctx.handlers = append(mw, ctx.handlers...)
 }
 
+// Decode parsing request body to your struct dest,
+// which must have method IsValid() bool.
+// Method IsValid() validate body of request with your
+// conditions
+//
+// # Example of usage
+//
+//	type Request struct {
+//		msg string `json:"msg"`
+//	}
+//
+//	func (p *PostReq) IsValid() bool {
+//		l := len([]rune(p.msg))
+//		return l > 0 && l < 25
+//	}
+//
+//	func MainHandler(ctx *router.APIContext) {
+//		var req PostReq
+//
+//		err := ctx.Decode(&req)
+//		if err != nil {
+//			ctx.Error("failed to decode req", err)
+//			ctx.WriteFailure(http.StatusBadRequest, "invalid request")
+//			return
+//		}
+//	}
 func (ctx *APIContext) Decode(dest validator) error {
 	if ctx.r.Method == http.MethodGet {
 		return ErrGetBodyFromGet
