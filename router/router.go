@@ -88,6 +88,30 @@ func NewRouter(log *slog.Logger) *Router {
 
 // Group — create router group with own middleware
 // and inheritance parent middleware
+//
+// # Example of usage
+//
+//	func main() {
+//		r := router.NewRouter(slog.Default())
+//		groupUser := r.Group("/user)
+//		groupAdmin := r.Group("/admin)
+//
+//		r.Use(MiddlewareCommon) <- middleware for all groups
+//		groupUser.Use(MiddlewareUser) <- middleware only for group user ("/user")
+//		groupAdmin.Use(MiddlewareAdmin) <- middleware only for group admin ("/admin")
+//	}
+//
+//	func MiddlewareCommon(ctx *router.APIContext) {
+//		ctx.Info("hello", "handler", "main")
+//	}
+//
+//	func MiddlewareUser(ctx *router.APIContext) {
+//		ctx.Info("hello", "handler", "user")
+//	}
+//
+//	func MiddlewareAdmin(ctx *router.APIContext) {
+//		ctx.Info("hello", "handler", "admin")
+//	}
 func (r *Router) Group(prefix string) *Router {
 	return &Router{
 		root:       r.root,
