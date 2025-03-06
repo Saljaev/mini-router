@@ -108,6 +108,8 @@ func (ctx *APIContext) Decode(dest validator) error {
 	return nil
 }
 
+// WriteFailure write to response writer code and struct
+// Error with msg
 func (ctx *APIContext) WriteFailure(code int, msg string) {
 	ctx.w.WriteHeader(code)
 
@@ -123,6 +125,8 @@ func (ctx *APIContext) WriteFailure(code int, msg string) {
 	ctx.cancel()
 }
 
+// SuccessWithData write to response writer status OK and
+// marshalled to JSON data
 func (ctx *APIContext) SuccessWithData(data interface{}) {
 	jsonData, err := json.Marshal(data)
 	if err != nil {
